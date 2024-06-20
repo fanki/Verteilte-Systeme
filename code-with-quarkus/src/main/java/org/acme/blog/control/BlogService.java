@@ -1,9 +1,10 @@
-package ch.hftm.blog.control;
+package org.acme.blog.control;
 
 import java.util.List;
 
-import ch.hftm.blog.entity.Blog;
-import ch.hftm.blog.repository.BlogRepository;
+import org.acme.blog.entity.Blog;
+import org.acme.blog.repository.BlogRepository;
+
 import io.quarkus.logging.Log;
 
 import jakarta.enterprise.context.Dependent;
@@ -21,62 +22,13 @@ public class BlogService {
         return blogs;
     }
 
+    public List<Blog> getBlogsByAuthor(Long authorId) {
+        return blogRepository.find("author.id", authorId).list();
+    }
+
     @Transactional
     public void addBlog(Blog blog) {
         Log.info("Adding blog " + blog.getTitle());
         blogRepository.persist(blog);
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

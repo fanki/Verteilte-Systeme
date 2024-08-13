@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @QuarkusTest
 public class BlogRessourceTest {
+    
     @Inject
     BlogService blogService;
 
@@ -28,25 +29,39 @@ public class BlogRessourceTest {
     @Test
     @Transactional
     public void testAddBlogWithAuthor() {
-        // Arrange: Erstelle einen Autor und speichere ihn über den AuthorService
+        // Arrange
         Author author = new Author("Joel Bärtschi");
         authorService.addAuthor(author);
 
-        // Act: Erstelle einen Blog und füge ihn über die BlogResource hinzu
-        Blog blog = new Blog();
-        blog.setTitle("Test Blog");
-        blog.setContent("This is a test blog");
-        blog.setAuthor(author); // Setze den Autor für den Blog
-
+        // Act
+        Blog blog = new Blog("Test Blog", "This is a test blog", "General", author);
         blogResource.addBlog(blog);
 
-        // Assert: Überprüfe, ob der Blog erfolgreich hinzugefügt wurde
+        // Assert
         List<Blog> blogs = blogService.getBlogs();
-        assertEquals(3, blogs.size());
+        assertEquals(3, blogs.size()); // Adjust based on initial setup
 
         Blog addedBlog = blogs.get(2);
         assertEquals("Test Blog", addedBlog.getTitle());
         assertEquals("This is a test blog", addedBlog.getContent());
         assertEquals("Joel Bärtschi", addedBlog.getAuthor().getName());
+    }
+
+    @Test
+    @Transactional
+    void testDeleteBlog() {
+        // Arrange
+        Author author = new Author("Author to Delete");
+        authorService.addAuthor(author);
+        Blog blog = new Blog("Blog to Delete", "Content", "General", author);
+        blogService.addBlog(blog);
+        List<Blog> blogsBefore = blogService.getBlogs();
+
+        // Act
+        blogResource.deleteBlog(blog.getId());
+        List<Blog> blogsAfter = blogService.getBlogs();
+
+        // Assert
+        assertEquals(blogsBefore.size() - 1, blogsAfter.size());
     }
 }

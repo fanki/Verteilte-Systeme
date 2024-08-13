@@ -1,28 +1,138 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "version": "1",
-    "title": "Blog-API"
+    "version": "1.0.0",
+    "title": "Blog API",
+    "description": "API für das Blog-System einschließlich Autoren, Blogs und Kommentare."
   },
   "paths": {
+    "/author": {
+      "get": {
+        "operationId": "getAuthors",
+        "description": "Erhalte alle Autoren.",
+        "responses": {
+          "200": {
+            "description": "Liste aller Autoren.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Author"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "addAuthor",
+        "description": "Fügt einen neuen Autor hinzu.",
+        "requestBody": {
+          "description": "Daten des neuen Autors.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Author"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Autor erfolgreich erstellt.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Author"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/author/{id}": {
+      "put": {
+        "operationId": "editAuthor",
+        "description": "Bearbeitet einen bestehenden Autor.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Aktualisierte Daten des Autors.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Author"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Autor erfolgreich bearbeitet.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Author"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Autor nicht gefunden.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/blog": {
       "get": {
         "operationId": "getBlogs",
-        "description": "gibt alle Blogs zurück",
+        "description": "Gibt alle Blogs zurück. Kann nach Autor und Titel gefiltert werden.",
         "parameters": [
           {
             "name": "authorId",
             "in": "query",
-            "required": false,
             "schema": {
               "type": "integer"
             },
-            "description": "ID des Autors, um Blogs zu filtern"
+            "description": "ID des Autors zum Filtern der Blogs."
+          },
+          {
+            "name": "title",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Titel zum Filtern der Blogs."
           }
         ],
         "responses": {
           "200": {
-            "description": "Erfolgreiche Antwort",
+            "description": "Liste aller Blogs.",
             "content": {
               "application/json": {
                 "schema": {
@@ -35,7 +145,7 @@
             }
           },
           "404": {
-            "description": "Keine Blogs gefunden",
+            "description": "Keine Blogs gefunden.",
             "content": {
               "application/json": {
                 "schema": {
@@ -53,8 +163,10 @@
       },
       "post": {
         "operationId": "addBlog",
-        "description": "füge einen Blog hinzu",
+        "description": "Fügt einen neuen Blog hinzu.",
         "requestBody": {
+          "description": "Daten des neuen Blogs.",
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
@@ -65,16 +177,11 @@
         },
         "responses": {
           "201": {
-            "description": "Blog erfolgreich erstellt",
+            "description": "Blog erfolgreich erstellt.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/Blog"
                 }
               }
             }
@@ -82,56 +189,26 @@
         }
       }
     },
-    "/author": {
-      "get": {
-        "operationId": "getAuthors",
-        "description": "Erhalte alle Autoren",
-        "responses": {
-          "200": {
-            "description": "Erfolgreiche Antwort",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Author"
-                  }
-                }
-              }
+    "/blog/{id}": {
+      "delete": {
+        "operationId": "deleteBlog",
+        "description": "Löscht einen Blog anhand der ID.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
             }
           }
-        }
-      },
-      "post": {
-        "operationId": "addAuthor",
-        "description": "fügt einen Autor hinzu",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Author"
-              }
-            }
-          }
-        },
+        ],
         "responses": {
-          "201": {
-            "description": "Autor erfolgreich erstellt",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
+          "204": {
+            "description": "Blog erfolgreich gelöscht."
           },
           "404": {
-            "description": "Nicht gefunden",
+            "description": "Blog nicht gefunden.",
             "content": {
               "application/json": {
                 "schema": {
@@ -148,10 +225,95 @@
         }
       }
     },
-    "/author/{id}": {
-      "put": {
-        "operationId": "editAuthor",
-        "description": "Editiere einen Autor",
+    "/blog/{blogId}/comments": {
+      "get": {
+        "operationId": "getComments",
+        "description": "Gibt alle Kommentare für einen bestimmten Blog zurück.",
+        "parameters": [
+          {
+            "name": "blogId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID des Blogs, um Kommentare abzurufen."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste aller Kommentare für den Blog.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Comment"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Keine Kommentare gefunden.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "addComment",
+        "description": "Fügt einen neuen Kommentar zu einem Blog hinzu.",
+        "parameters": [
+          {
+            "name": "blogId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID des Blogs, zu dem der Kommentar hinzugefügt wird."
+          }
+        ],
+        "requestBody": {
+          "description": "Daten des neuen Kommentars.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Comment"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Kommentar erfolgreich erstellt.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comment"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/comments/{id}": {
+      "delete": {
+        "operationId": "deleteComment",
+        "description": "Löscht einen Kommentar anhand der ID.",
         "parameters": [
           {
             "in": "path",
@@ -162,33 +324,12 @@
             }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Author"
-              }
-            }
-          }
-        },
         "responses": {
-          "200": {
-            "description": "Autor erfolgreich bearbeitet",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
+          "204": {
+            "description": "Kommentar erfolgreich gelöscht."
           },
           "404": {
-            "description": "Autor nicht gefunden",
+            "description": "Kommentar nicht gefunden.",
             "content": {
               "application/json": {
                 "schema": {
@@ -208,6 +349,22 @@
   },
   "components": {
     "schemas": {
+      "Author": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "biography": {
+            "type": "string"
+          }
+        },
+        "required": ["name"]
+      },
       "Blog": {
         "type": "object",
         "properties": {
@@ -221,24 +378,30 @@
           "content": {
             "type": "string"
           },
+          "category": {
+            "type": "string"
+          },
           "author": {
             "$ref": "#/components/schemas/Author"
           }
         },
-        "required": ["id", "title", "content", "author"]
+        "required": ["title", "content", "author"]
       },
-      "Author": {
+      "Comment": {
         "type": "object",
         "properties": {
           "id": {
             "type": "integer",
             "format": "int64"
           },
-          "name": {
+          "content": {
             "type": "string"
+          },
+          "blog": {
+            "$ref": "#/components/schemas/Blog"
           }
         },
-        "required": ["id", "name"]
+        "required": ["content", "blog"]
       }
     }
   }

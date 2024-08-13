@@ -15,6 +15,7 @@ public class Author {
     @GeneratedValue
     private Long id;
     private String name;
+    private String biography;
 
     public Author(){
         
@@ -23,4 +24,8 @@ public class Author {
         this.name = name;
     }
 
+    public Author(String name, String biography){
+        this.name = name;
+        this.biography = biography;
+    }
 }

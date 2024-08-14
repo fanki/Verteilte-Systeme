@@ -3,9 +3,11 @@ package org.acme.blog.boundry;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.core.Response;
 
 import org.acme.blog.control.AuthorService;
 import org.acme.blog.control.BlogService;
+import org.acme.blog.dto.BlogDTO;
 import org.acme.blog.entity.Author;
 import org.acme.blog.entity.Blog;
 import org.junit.jupiter.api.Test;
@@ -34,8 +36,10 @@ public class BlogRessourceTest {
         authorService.addAuthor(author);
 
         // Act
-        Blog blog = new Blog("Test Blog", "This is a test blog", "General", author);
-        blogResource.addBlog(blog);
+        // Hier ist der Tag-Parameter jetzt vorhanden
+        BlogDTO blogDTO = new BlogDTO("Test Blog", "This is a test blog", "General", author.getId(), "tag1, tag2");
+        Response response = blogResource.addBlog(blogDTO, null); // UriInfo kann null sein
+        assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
 
         // Assert
         List<Blog> blogs = blogService.getBlogs();
@@ -58,10 +62,11 @@ public class BlogRessourceTest {
         List<Blog> blogsBefore = blogService.getBlogs();
 
         // Act
-        blogResource.deleteBlog(blog.getId());
-        List<Blog> blogsAfter = blogService.getBlogs();
+        Response response = blogResource.deleteBlog(blog.getId());
+        assertEquals(Response.Status.NO_CONTENT.getStatusCode(), response.getStatus());
 
         // Assert
+        List<Blog> blogsAfter = blogService.getBlogs();
         assertEquals(blogsBefore.size() - 1, blogsAfter.size());
     }
 }

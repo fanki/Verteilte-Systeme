@@ -4,50 +4,33 @@ import java.util.List;
 
 import org.acme.blog.control.BlogService;
 import org.acme.blog.control.CommentService;
+import org.acme.blog.dto.BlogDTO;
+import org.acme.blog.dto.CommentDTO;
 import org.acme.blog.entity.Blog;
 import org.acme.blog.entity.Comment;
+import org.acme.blog.entity.Author;
 
 import jakarta.inject.Inject;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
 
-@Path("blog")
+@Path("/blog")
 public class BlogRessource {
+
     @Inject
     BlogService blogService;
 
     @Inject
     CommentService commentService;
-
-    @GET
-    public Response getBlogs(@QueryParam("authorId") Long authorId) {
-        if (authorId != null) {
-            List<Blog> blogs = blogService.getBlogsByAuthor(authorId);
-            if (blogs.isEmpty()) {
-                return Response.status(Response.Status.NOT_FOUND).entity("No blogs found for the given author").build();
-            }
-            return Response.ok(blogs).build();
-        }
-        return Response.ok(blogService.getBlogs()).build();
-    }
-
-    @POST
-    public Response addBlog(Blog blog) {
-        blogService.addBlog(blog);
-        return Response.status(Response.Status.CREATED).entity(blog).build();
-    }
-
-    @DELETE
-    @Path("/{id}")
-    public Response deleteBlog(@PathParam("id") long id) {
-        blogService.deleteBlog(id);
-        return Response.status(Response.Status.NO_CONTENT).build();
-    }
+    
 
     @GET
     public Response getBlogs(@QueryParam("authorId") Long authorId, @QueryParam("title") String title) {
@@ -59,12 +42,31 @@ public class BlogRessource {
     }
 
     @POST
+    public Response addBlog(@Valid BlogDTO blogDTO, @Context UriInfo uriInfo) {
+        Author author = blogService.findAuthorById(blogDTO.authorId()); 
+        if (author == null) {
+            return Response.status(Response.Status.NOT_FOUND).entity("Author not found").build();
+        }
+        Blog blog = new Blog(blogDTO.title(), blogDTO.content(), blogDTO.category(), author, null); 
+        blogService.addBlog(blog);
+        return Response.status(Response.Status.CREATED).entity(blog).build();
+    }
+
+    @DELETE
+    @Path("/{id}")
+    public Response deleteBlog(@PathParam("id") long id) {
+        blogService.deleteBlog(id);
+        return Response.status(Response.Status.NO_CONTENT).build();
+    }
+
+    @POST
     @Path("/{blogId}/comments")
-    public Response addComment(@PathParam("blogId") Long blogId, Comment comment) {
+    public Response addComment(@PathParam("blogId") Long blogId, @Valid CommentDTO commentDTO) {
         Blog blog = blogService.findById(blogId);
         if (blog == null) {
             return Response.status(Response.Status.NOT_FOUND).entity("Blog not found").build();
         }
+        Comment comment = new Comment(commentDTO.content(), blog);
         commentService.addComment(blog, comment);
         return Response.status(Response.Status.CREATED).entity(comment).build();
     }

@@ -1,12 +1,11 @@
 package org.acme.blog.control;
 
-import java.util.List;
 
 import org.acme.blog.entity.Author;
 import org.acme.blog.repository.AuthorRepository;
 import org.acme.blog.control.AuthorService;
 
-import jakarta.enterprise.context.ApplicationScoped;
+
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -20,13 +19,6 @@ public class AuthorService {
 
     @Inject
     AuthorRepository authorRepository;
-
-    @Inject
-    AuthorService authorService;
-
-    public List<Author> getAllAuthors() {
-        return authorRepository.listAll();
-    }
 
     @Transactional
     public void addAuthor(Author author) {
@@ -46,8 +38,12 @@ public class AuthorService {
     @DELETE
     @Path("/{id}")
     public Response deleteAuthor(@PathParam("id") long id) {
-        authorService.deleteAuthor(id);
+        deleteAuthor(id);
         return Response.status(Response.Status.NO_CONTENT).build();
     }
 
+    @Transactional
+    public Author findById(Long id) {
+        return authorRepository.findById(id);
+    }
 }

@@ -3,7 +3,7 @@
   "info": {
     "version": "1.0.0",
     "title": "Blog API",
-    "description": "API für das Blog-System einschließlich Autoren, Blogs und Kommentare."
+    "description": "API für das Blog-System einschließlich Autoren, Blogs, Kommentare und Tags."
   },
   "paths": {
     "/author": {
@@ -47,6 +47,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Author"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ungültige Anfrage.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -95,12 +105,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ungültige Anfrage.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -111,7 +126,7 @@
     "/blog": {
       "get": {
         "operationId": "getBlogs",
-        "description": "Gibt alle Blogs zurück. Kann nach Autor und Titel gefiltert werden.",
+        "description": "Gibt alle Blogs zurück. Kann nach Autor, Titel oder Tag gefiltert werden.",
         "parameters": [
           {
             "name": "authorId",
@@ -128,6 +143,14 @@
               "type": "string"
             },
             "description": "Titel zum Filtern der Blogs."
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Tag zum Filtern der Blogs."
           }
         ],
         "responses": {
@@ -149,12 +172,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -185,6 +203,16 @@
                 }
               }
             }
+          },
+          "400": {
+            "description": "Ungültige Anfrage.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -212,12 +240,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -259,12 +282,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -306,6 +324,26 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Blog nicht gefunden.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ungültige Anfrage.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -333,12 +371,125 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tag": {
+      "get": {
+        "operationId": "getTags",
+        "description": "Gibt alle Tags zurück.",
+        "responses": {
+          "200": {
+            "description": "Liste aller Tags.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Tag"
                   }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "addTag",
+        "description": "Fügt einen neuen Tag hinzu.",
+        "requestBody": {
+          "description": "Daten des neuen Tags.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Tag"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tag erfolgreich erstellt.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tag"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ungültige Anfrage.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/blog/{blogId}/tags": {
+      "post": {
+        "operationId": "addTagToBlog",
+        "description": "Fügt einen Tag zu einem Blog hinzu.",
+        "parameters": [
+          {
+            "name": "blogId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID des Blogs, zu dem der Tag hinzugefügt wird."
+          }
+        ],
+        "requestBody": {
+          "description": "Daten des Tags.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Tag"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tag erfolgreich zum Blog hinzugefügt.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tag"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Blog nicht gefunden.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ungültige Anfrage.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -383,6 +534,12 @@
           },
           "author": {
             "$ref": "#/components/schemas/Author"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Tag"
+            }
           }
         },
         "required": ["title", "content", "author"]
@@ -402,6 +559,27 @@
           }
         },
         "required": ["content", "blog"]
+      },
+      "Tag": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": ["name"]
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        }
       }
     }
   }

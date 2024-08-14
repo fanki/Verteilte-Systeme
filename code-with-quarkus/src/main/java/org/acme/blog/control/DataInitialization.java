@@ -1,18 +1,20 @@
 package org.acme.blog.control;
 
+import java.util.List;
+
 import org.acme.blog.entity.Author;
 import org.acme.blog.entity.Blog;
 import org.acme.blog.entity.Comment;
+import org.acme.blog.entity.Tag;
 import org.acme.blog.repository.AuthorRepository;
-import org.acme.blog.control.BlogService;
-import org.acme.blog.control.CommentService;
 
-import io.quarkus.runtime.StartupEvent;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import org.jboss.logging.Logger;
+
+import io.quarkus.runtime.StartupEvent;
 
 @ApplicationScoped
 public class DataInitialization {
@@ -24,6 +26,9 @@ public class DataInitialization {
 
     @Inject
     CommentService commentService;
+
+    @Inject
+    TagService tagService;
 
     @Inject
     AuthorRepository authorRepository;
@@ -39,12 +44,21 @@ public class DataInitialization {
 
         LOG.info("Authors initialized.");
 
+        // Initial Tags
+        Tag tagTech = new Tag("Tech");
+        Tag tagTravel = new Tag("Travel");
+
+        tagService.addTag(tagTech);
+        tagService.addTag(tagTravel);
+
+        LOG.info("Tags initialized.");
+
         // Initial Blogs
         Blog[] initialBlogs = {
-            new Blog("Blog Nummer 1", "Blog let's go!", "Tech", author1),
-            new Blog("Blog Nummer 2", "Hurra!", "Travel", author2),
-            new Blog("Blog Nummer 3", "A new blog about Quarkus.", "Tech", author1),
-            new Blog("Blog Nummer 4", "Exploring new places.", "Travel", author2)
+            new Blog("Blog Nummer 1", "Blog let's go!", "Tech", author1, List.of(tagTech)),
+            new Blog("Blog Nummer 2", "Hurra!", "Travel", author2, List.of(tagTravel)),
+            new Blog("Blog Nummer 3", "A new blog about Quarkus.", "Tech", author1, List.of(tagTech)),
+            new Blog("Blog Nummer 4", "Exploring new places.", "Travel", author2, List.of(tagTravel))
         };
 
         for (Blog blog : initialBlogs) {

@@ -2,7 +2,9 @@ package org.acme.blog.control;
 
 import java.util.List;
 
+import org.acme.blog.entity.Author;
 import org.acme.blog.entity.Blog;
+import org.acme.blog.repository.AuthorRepository;
 import org.acme.blog.repository.BlogRepository;
 
 import io.quarkus.logging.Log;
@@ -15,6 +17,9 @@ import jakarta.transaction.Transactional;
 public class BlogService {
     @Inject
     BlogRepository blogRepository;
+
+    @Inject
+    AuthorRepository authorRepository;
 
     public List<Blog> getBlogs() {
         var blogs = blogRepository.listAll();
@@ -60,5 +65,9 @@ public class BlogService {
 
     public Blog findById(Long id) {
         return blogRepository.findById(id);
+    }
+
+    public Author findAuthorById(Long authorId) {
+        return authorRepository.findById(authorId);
     }
 }

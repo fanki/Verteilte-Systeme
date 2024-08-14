@@ -1,11 +1,11 @@
 package org.acme.blog.entity;
 
-import java.util.List;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Entity
@@ -14,6 +14,8 @@ public class Author {
     @Id 
     @GeneratedValue
     private Long id;
+    @NotBlank(message = "Name darf nicht leer sein.")
+    @Size(min = 2, message = "Name sollte mindestens 2 Zeichen enthalten.")
     private String name;
     private String biography;
 

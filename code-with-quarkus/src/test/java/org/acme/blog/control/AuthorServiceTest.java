@@ -2,6 +2,8 @@ package org.acme.blog.control;
 
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
+
+import org.acme.blog.boundry.AuthorResource;
 import org.acme.blog.entity.Author;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +18,9 @@ public class AuthorServiceTest {
     @Inject
     AuthorService authorService;
 
+    @Inject
+AuthorResource authorResource;
+
     @Test
     void testAddAuthor() {
         // Arrange
@@ -23,7 +28,7 @@ public class AuthorServiceTest {
 
         // Act
         authorService.addAuthor(author);
-        List<Author> authors = authorService.getAllAuthors();
+        List<Author> authors = authorResource.getAllAuthors();
 
         // Assert
         assertEquals(1, authors.size());
@@ -40,7 +45,7 @@ public class AuthorServiceTest {
 
         // Act
         authorService.updateAuthor(authorId, author);
-        Author updatedAuthor = authorService.getAllAuthors().stream()
+        Author updatedAuthor = authorResource.getAllAuthors().stream()
                 .filter(a -> a.getId().equals(authorId))
                 .findFirst()
                 .orElse(null);
@@ -56,11 +61,11 @@ public class AuthorServiceTest {
         Author author = new Author("Author to Delete");
         authorService.addAuthor(author);
         Long authorId = author.getId();
-        List<Author> authorsBefore = authorService.getAllAuthors();
+        List<Author> authorsBefore = authorResource.getAllAuthors();
 
         // Act
         authorService.deleteAuthor(authorId);
-        List<Author> authorsAfter = authorService.getAllAuthors();
+        List<Author> authorsAfter = authorResource.getAllAuthors();
 
         // Assert
         assertEquals(authorsBefore.size() - 1, authorsAfter.size());

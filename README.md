@@ -19,10 +19,12 @@ Diese Dokumentation beschreibt die Blog-API, die es ermöglicht, Blogs, Autoren,
 
 #### `GET /author`
 Gibt alle Autoren zurück.
+- **Zugänglichkeit**: Öffentlich
 - **Antworttyp**: `application/json` – Liste von Autoren.
 
 #### `POST /author`
 Fügt einen neuen Autor hinzu.
+- **Zugänglichkeit**: Authentifizierung erforderlich, Rolle: Admin
 - **Anfrage-Body**: `application/json` – Autor-Daten (Name, Biografie).
 - **Antworttyp**: `application/json` – Erstellter Autor.
 - **Fehler**:
@@ -30,6 +32,7 @@ Fügt einen neuen Autor hinzu.
 
 #### `PUT /author/{id}`
 Aktualisiert die Informationen eines Autors.
+- **Zugänglichkeit**: Authentifizierung erforderlich, Rolle: Admin
 - **Anfrage-Body**: `application/json` – Aktualisierte Autor-Daten.
 - **Antworttyp**: `application/json` – Aktualisierter Autor.
 - **Fehler**:
@@ -40,6 +43,7 @@ Aktualisiert die Informationen eines Autors.
 
 #### `GET /blog`
 Gibt alle Blogs zurück oder filtert Blogs nach `authorId`, `title` oder `tag`.
+- **Zugänglichkeit**: Öffentlich
 - **Anfrage-Parameter**:
   - `authorId` (optional) – ID des Autors zur Filterung.
   - `title` (optional) – Titel zum Filtern der Blogs.
@@ -50,6 +54,7 @@ Gibt alle Blogs zurück oder filtert Blogs nach `authorId`, `title` oder `tag`.
 
 #### `POST /blog`
 Fügt einen neuen Blog hinzu.
+- **Zugänglichkeit**: Authentifizierung erforderlich, Rolle: Author
 - **Anfrage-Body**: `application/json` – Blog-Daten (Titel, Inhalt, Kategorie, Autor, Tags).
 - **Antworttyp**: `application/json` – Erstellter Blog.
 - **Fehler**:
@@ -57,6 +62,7 @@ Fügt einen neuen Blog hinzu.
 
 #### `DELETE /blog/{id}`
 Löscht einen Blog anhand der ID.
+- **Zugänglichkeit**: Authentifizierung erforderlich, Rolle: Admin
 - **Antworttyp**: `204 No Content` – Erfolgsmeldung.
 - **Fehler**:
   - `404 Not Found` – Blog nicht gefunden.
@@ -65,6 +71,7 @@ Löscht einen Blog anhand der ID.
 
 #### `GET /blog/{blogId}/comments`
 Gibt alle Kommentare für einen bestimmten Blog zurück.
+- **Zugänglichkeit**: Öffentlich
 - **Anfrage-Parameter**:
   - `blogId` – ID des Blogs zur Filterung.
 - **Antworttyp**: `application/json` – Liste von Kommentaren.
@@ -73,6 +80,7 @@ Gibt alle Kommentare für einen bestimmten Blog zurück.
 
 #### `POST /blog/{blogId}/comments`
 Fügt einen neuen Kommentar zu einem Blog hinzu.
+- **Zugänglichkeit**: Authentifizierung erforderlich, Rolle: Author
 - **Anfrage-Body**: `application/json` – Kommentar-Daten (Inhalt).
 - **Antworttyp**: `application/json` – Erstellter Kommentar.
 - **Fehler**:
@@ -81,6 +89,7 @@ Fügt einen neuen Kommentar zu einem Blog hinzu.
 
 #### `DELETE /comments/{id}`
 Löscht einen Kommentar anhand der ID.
+- **Zugänglichkeit**: Authentifizierung erforderlich, Rolle: Admin
 - **Antworttyp**: `204 No Content` – Erfolgsmeldung.
 - **Fehler**:
   - `404 Not Found` – Kommentar nicht gefunden.
@@ -89,10 +98,12 @@ Löscht einen Kommentar anhand der ID.
 
 #### `GET /tag`
 Gibt alle Tags zurück.
+- **Zugänglichkeit**: Öffentlich
 - **Antworttyp**: `application/json` – Liste von Tags.
 
 #### `POST /tag`
 Fügt einen neuen Tag hinzu.
+- **Zugänglichkeit**: Authentifizierung erforderlich, Rolle: Admin
 - **Anfrage-Body**: `application/json` – Tag-Daten (Name).
 - **Antworttyp**: `application/json` – Erstellter Tag.
 - **Fehler**:
@@ -100,6 +111,7 @@ Fügt einen neuen Tag hinzu.
 
 #### `POST /blog/{blogId}/tags`
 Fügt einen Tag zu einem Blog hinzu.
+- **Zugänglichkeit**: Authentifizierung erforderlich, Rolle: Admin
 - **Anfrage-Body**: `application/json` – Tag-Daten (Name).
 - **Antworttyp**: `application/json` – Hinzugefügter Tag.
 - **Fehler**:
@@ -168,6 +180,31 @@ Fügt einen Tag zu einem Blog hinzu.
 - **BlogRepository**: Bietet Zugriff auf die Blog-Entitäten.
 - **CommentRepository**: Bietet Zugriff auf die Comment-Entitäten.
 - **TagRepository**: Bietet Zugriff auf die Tag-Entitäten.
+
+## Berechtigungskonzept
+
+### Öffentlich zugängliche Methoden
+Die folgenden Methoden sind ohne Authentifizierung zugänglich:
+- `GET /author`
+- `GET /blog`
+- `GET /blog/{blogId}/comments`
+- `GET /tag`
+
+### Benutzer-Rollen
+
+1. **`Admin`**
+   - **Berechtigungen**:
+     - Kann Autoren hinzufügen (`POST /author`)
+     - Kann Autoren aktualisieren (`PUT /author/{id}`)
+     - Kann Blogs löschen (`DELETE /blog/{id}`)
+     - Kann Kommentare löschen (`DELETE /comments/{id}`)
+     - Kann Tags hinzufügen (`POST /tag`)
+     - Kann Tags zu Blogs hinzufügen (`POST /blog/{blogId}/tags`)
+
+2. **`Author`**
+   - **Berechtigungen**:
+     - Kann Blogs erstellen (`POST /blog`)
+     - Kann Kommentare zu Blogs hinzufügen (`POST /blog/{blogId}/comments`)
 
 ## Hinweise
 - Achten Sie darauf, dass die `@Transactional`-Anmerkung verwendet wird, um sicherzustellen, dass Datenbankoperationen ordnungsgemäß ausgeführt werden.

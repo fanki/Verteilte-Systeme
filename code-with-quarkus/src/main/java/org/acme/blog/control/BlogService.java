@@ -47,7 +47,7 @@ public class BlogService {
         if (blog != null) {
             blogRepository.delete(blog);
         } else {
-            System.out.println("Blog with ID " + id + " not found");
+            Log.info("Blog with ID " + id + " not found");
         }
     }
 
@@ -67,7 +67,9 @@ public class BlogService {
         return blogRepository.findById(id);
     }
 
-    public Author findAuthorById(Long authorId) {
-        return authorRepository.findById(authorId);
+      @Transactional
+    public Author findAuthorById(Long id) {
+        return authorRepository.findById(id);
     }
+
 }

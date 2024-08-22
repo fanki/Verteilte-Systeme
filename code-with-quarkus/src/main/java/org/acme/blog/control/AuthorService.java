@@ -1,10 +1,8 @@
 package org.acme.blog.control;
 
-
 import org.acme.blog.entity.Author;
 import org.acme.blog.repository.AuthorRepository;
 import org.acme.blog.control.AuthorService;
-
 
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
@@ -35,11 +33,12 @@ public class AuthorService {
         return existingAuthor;
     }
 
-    @DELETE
-    @Path("/{id}")
-    public Response deleteAuthor(@PathParam("id") long id) {
-        deleteAuthor(id);
-        return Response.status(Response.Status.NO_CONTENT).build();
+    @Transactional
+    public void deleteAuthor(long id) {
+        Author author = authorRepository.findById(id);
+        if (author != null) {
+            authorRepository.delete(author);
+        }
     }
 
     @Transactional

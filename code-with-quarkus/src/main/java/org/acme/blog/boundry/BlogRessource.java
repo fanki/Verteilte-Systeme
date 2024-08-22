@@ -3,13 +3,12 @@ package org.acme.blog.boundry;
 import java.util.List;
 
 import org.acme.blog.control.BlogService;
-import org.acme.blog.control.CommentService;
 import org.acme.blog.dto.BlogDTO;
-import org.acme.blog.dto.CommentDTO;
 import org.acme.blog.entity.Blog;
-import org.acme.blog.entity.Comment;
 import org.acme.blog.entity.Author;
 
+import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.DELETE;
@@ -27,12 +26,9 @@ public class BlogRessource {
 
     @Inject
     BlogService blogService;
-
-    @Inject
-    CommentService commentService;
     
-
     @GET
+    @PermitAll
     public Response getBlogs(@QueryParam("authorId") Long authorId, @QueryParam("title") String title) {
         List<Blog> blogs = blogService.getBlogsFiltered(authorId, title);
         if (blogs.isEmpty()) {
@@ -42,6 +38,7 @@ public class BlogRessource {
     }
 
     @POST
+    @RolesAllowed({"Author", "Admin"})
     public Response addBlog(@Valid BlogDTO blogDTO, @Context UriInfo uriInfo) {
         Author author = blogService.findAuthorById(blogDTO.authorId()); 
         if (author == null) {
@@ -54,45 +51,15 @@ public class BlogRessource {
 
     @DELETE
     @Path("/{id}")
+    @RolesAllowed("Admin")
     public Response deleteBlog(@PathParam("id") long id) {
         blogService.deleteBlog(id);
         return Response.status(Response.Status.NO_CONTENT).build();
     }
 
-    @POST
-    @Path("/{blogId}/comments")
-    public Response addComment(@PathParam("blogId") Long blogId, @Valid CommentDTO commentDTO) {
-        Blog blog = blogService.findById(blogId);
-        if (blog == null) {
-            return Response.status(Response.Status.NOT_FOUND).entity("Blog not found").build();
-        }
-        Comment comment = new Comment(commentDTO.content(), blog);
-        commentService.addComment(blog, comment);
-        return Response.status(Response.Status.CREATED).entity(comment).build();
-    }
-
-    @GET
-    @Path("/{blogId}/comments")
-    public Response getComments(@PathParam("blogId") Long blogId) {
-        List<Comment> comments = commentService.getCommentsByBlog(blogId);
-        if (comments.isEmpty()) {
-            return Response.status(Response.Status.NOT_FOUND).entity("No comments found").build();
-        }
-        return Response.ok(comments).build();
-    }
-
-    @DELETE
-    @Path("/{blogId}/comments/{id}")
-    public Response deleteComment(@PathParam("id") Long id) {
-        boolean deleted = commentService.deleteComment(id);
-        if (!deleted) {
-            return Response.status(Response.Status.NOT_FOUND).entity("Comment not found").build();
-        }
-        return Response.noContent().build();
-    }
-
     @GET
     @Path("/category")
+    @PermitAll
     public Response getBlogsByCategory(@QueryParam("category") String category) {
         List<Blog> blogs = blogService.getBlogsByCategory(category);
         if (blogs.isEmpty()) {

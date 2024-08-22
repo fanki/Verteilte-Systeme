@@ -28,7 +28,7 @@
       },
       "post": {
         "operationId": "addAuthor",
-        "description": "Fügt einen neuen Autor hinzu.",
+        "description": "Erstellt einen neuen Autor. Authentifizierung erforderlich.",
         "requestBody": {
           "description": "Daten des neuen Autors.",
           "required": true,
@@ -220,7 +220,7 @@
     "/blog/{id}": {
       "delete": {
         "operationId": "deleteBlog",
-        "description": "Löscht einen Blog anhand der ID.",
+        "description": "Löscht einen Blog anhand der ID. Authentifizierung und Admin-Rolle erforderlich.",
         "parameters": [
           {
             "in": "path",

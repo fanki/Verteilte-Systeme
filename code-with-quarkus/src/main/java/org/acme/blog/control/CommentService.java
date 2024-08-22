@@ -22,10 +22,6 @@ public class CommentService {
         commentRepository.persist(comment);
     }
 
-    public List<Comment> getComments(Long blogId) {
-        return commentRepository.find("blog.id", blogId).list();
-    }
-
     public List<Comment> getCommentsByBlog(Long blogId) {
         return commentRepository.find("blog.id", blogId).list();
     }

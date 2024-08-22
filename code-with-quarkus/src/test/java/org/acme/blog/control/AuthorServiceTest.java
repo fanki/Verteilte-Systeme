@@ -11,15 +11,16 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @QuarkusTest
 public class AuthorServiceTest {
-    
+
     @Inject
     AuthorService authorService;
 
     @Inject
-AuthorResource authorResource;
+    AuthorResource authorResource;
 
     @Test
     void testAddAuthor() {
@@ -69,5 +70,41 @@ AuthorResource authorResource;
 
         // Assert
         assertEquals(authorsBefore.size() - 1, authorsAfter.size());
+    }
+
+    @Test
+    void testAddAuthorWithoutAuthorization() {
+        // Arrange
+        Author author = new Author("Unauthorized Author");
+
+        // Act & Assert
+        // Hier testen wir, dass der Zugriff ohne korrekte Rolle fehlschlägt
+        Exception exception = assertThrows(SecurityException.class, () -> {
+            authorService.addAuthor(author);
+        });
+
+        String expectedMessage = "Access denied";
+        String actualMessage = exception.getMessage();
+
+        assertEquals(expectedMessage, actualMessage);
+    }
+
+    @Test
+    void testDeleteAuthorWithoutAuthorization() {
+        // Arrange
+        Author author = new Author("Unauthorized Delete");
+        authorService.addAuthor(author);
+        Long authorId = author.getId();
+
+        // Act & Assert
+        // Hier testen wir, dass der Zugriff ohne korrekte Rolle fehlschlägt
+        Exception exception = assertThrows(SecurityException.class, () -> {
+            authorService.deleteAuthor(authorId);
+        });
+
+        String expectedMessage = "Access denied";
+        String actualMessage = exception.getMessage();
+
+        assertEquals(expectedMessage, actualMessage);
     }
 }

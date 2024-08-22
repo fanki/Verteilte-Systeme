@@ -15,10 +15,11 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @QuarkusTest
 public class BlogRessourceTest {
-    
+
     @Inject
     BlogService blogService;
 
@@ -36,7 +37,6 @@ public class BlogRessourceTest {
         authorService.addAuthor(author);
 
         // Act
-        // Hier ist der Tag-Parameter jetzt vorhanden
         BlogDTO blogDTO = new BlogDTO("Test Blog", "This is a test blog", "General", author.getId(), "tag1, tag2");
         Response response = blogResource.addBlog(blogDTO, null); // UriInfo kann null sein
         assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
@@ -68,5 +68,40 @@ public class BlogRessourceTest {
         // Assert
         List<Blog> blogsAfter = blogService.getBlogs();
         assertEquals(blogsBefore.size() - 1, blogsAfter.size());
+    }
+
+    @Test
+    void testAddBlogWithoutAuthorization() {
+        // Arrange
+        BlogDTO blogDTO = new BlogDTO("Unauthorized Blog", "This should fail", "General", 1L, "tag1");
+
+        // Act & Assert
+        // Hier testen wir, dass der Zugriff ohne korrekte Rolle fehlschlägt
+        Exception exception = assertThrows(SecurityException.class, () -> {
+            blogResource.addBlog(blogDTO, null);
+        });
+
+        String expectedMessage = "Access denied";
+        String actualMessage = exception.getMessage();
+
+        assertEquals(expectedMessage, actualMessage);
+    }
+
+    @Test
+    void testDeleteBlogWithoutAuthorization() {
+        // Arrange
+        Blog blog = new Blog("Unauthorized Delete", "This should fail");
+        blogService.addBlog(blog);
+
+        // Act & Assert
+        // Hier testen wir, dass der Zugriff ohne korrekte Rolle fehlschlägt
+        Exception exception = assertThrows(SecurityException.class, () -> {
+            blogResource.deleteBlog(blog.getId());
+        });
+
+        String expectedMessage = "Access denied";
+        String actualMessage = exception.getMessage();
+
+        assertEquals(expectedMessage, actualMessage);
     }
 }

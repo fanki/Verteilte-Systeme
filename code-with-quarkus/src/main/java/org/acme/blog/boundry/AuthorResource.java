@@ -5,6 +5,9 @@ import org.acme.blog.dto.AuthorDTO;
 import org.acme.blog.entity.Author;
 import org.acme.blog.repository.AuthorRepository;
 
+import io.quarkus.security.Authenticated;
+import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.GET;
@@ -28,11 +31,13 @@ public class AuthorResource {
     AuthorRepository authorRepository;
 
     @GET
+    @Authenticated
     public List<Author> getAllAuthors() {
         return authorRepository.listAll();
     }
 
     @POST
+    @RolesAllowed("Admin")
     public Response addAuthor(@Valid AuthorDTO authorDTO, @Context UriInfo uriInfo) {
         Author author = new Author(authorDTO.name(), authorDTO.biography());
         authorService.addAuthor(author);
@@ -41,6 +46,7 @@ public class AuthorResource {
 
     @PUT
     @Path("/{id}")
+    @RolesAllowed("Admin")
     public Response editAuthor(@PathParam("id") long id, @Valid AuthorDTO authorDTO) {
         Author author = new Author(authorDTO.name(), authorDTO.biography());
         Author updatedAuthor = authorService.updateAuthor(id, author);
@@ -50,6 +56,7 @@ public class AuthorResource {
         return Response.ok(updatedAuthor).build();
     }
 
+    @RolesAllowed("Admin")
     public Author updateAuthor(Long id, Author author) {
         Author existingAuthor = authorRepository.findById(id);
         if (existingAuthor != null) {

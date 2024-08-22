@@ -1,6 +1,7 @@
 package org.acme.blog.control;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 
@@ -13,6 +14,7 @@ import jakarta.inject.Inject;
 
 @QuarkusTest
 public class BlogServiceTest {
+
     @Inject
     BlogService blogService;
 
@@ -25,7 +27,6 @@ public class BlogServiceTest {
     @Test
     void listingAndAddingBlogs() {
         // Arrange
-   
         Blog blog = new Blog("Testing Blog", "This is my testing blog");
         int blogsBefore;
         List<Blog> blogs;
@@ -38,5 +39,40 @@ public class BlogServiceTest {
         // Assert
         assertEquals(blogsBefore + 1, blogs.size());
         assertEquals(blog, blogs.get(blogs.size() - 1));
+    }
+
+    @Test
+    void testAddBlogWithoutAuthorization() {
+        // Arrange
+        Blog blog = new Blog("Unauthorized Blog", "This should fail");
+
+        // Act & Assert
+        // Hier testen wir, dass der Zugriff ohne korrekte Rolle fehlschlägt
+        Exception exception = assertThrows(SecurityException.class, () -> {
+            blogService.addBlog(blog);
+        });
+
+        String expectedMessage = "Access denied";
+        String actualMessage = exception.getMessage();
+
+        assertEquals(expectedMessage, actualMessage);
+    }
+
+    @Test
+    void testDeleteBlogWithoutAuthorization() {
+        // Arrange
+        Blog blog = new Blog("Unauthorized Delete", "This should fail");
+        blogService.addBlog(blog);
+
+        // Act & Assert
+        // Hier testen wir, dass der Zugriff ohne korrekte Rolle fehlschlägt
+        Exception exception = assertThrows(SecurityException.class, () -> {
+            blogService.deleteBlog(blog.getId());
+        });
+
+        String expectedMessage = "Access denied";
+        String actualMessage = exception.getMessage();
+
+        assertEquals(expectedMessage, actualMessage);
     }
 }

@@ -161,7 +161,7 @@ Fügt einen Tag zu einem Blog hinzu.
 
 ### CommentService
 - `addComment(Blog blog, Comment comment)`: Fügt einen Kommentar zu einem Blog hinzu.
-- `getComments(Long blogId)`: Gibt alle Kommentare eines Blogs zurück.
+- `getCommentsByBlog(Long blogId)`: Gibt alle Kommentare eines Blogs zurück.
 - `deleteComment(Long id)`: Löscht einen Kommentar anhand der ID.
 
 ### TagService
@@ -181,37 +181,84 @@ Fügt einen Tag zu einem Blog hinzu.
 - **CommentRepository**: Bietet Zugriff auf die Comment-Entitäten.
 - **TagRepository**: Bietet Zugriff auf die Tag-Entitäten.
 
-## Berechtigungskonzept
+## Berechtigungskonzept und Authentifizierungs-Setup
 
-### Öffentlich zugängliche Methoden
-Die folgenden Methoden sind ohne Authentifizierung zugänglich:
-- `GET /author`
-- `GET /blog`
-- `GET /blog/{blogId}/comments`
-- `GET /tag`
+### Benutzer-Rollen und Berechtigungen
+Die folgenden Benutzerrollen sind in der API definiert und bestimmen, welche Aktionen die Benutzer ausführen können:
 
-### Benutzer-Rollen
+1. **Admin**
+   - Kann Autoren hinzufügen, aktualisieren und löschen.
+   - Kann Blogs hinzufügen und löschen.
+   - Kann Kommentare löschen.
+   - Kann Tags hinzufügen und Blogs zuweisen.
 
-1. **`Admin`**
-   - **Berechtigungen**:
-     - Kann Autoren hinzufügen (`POST /author`)
-     - Kann Autoren aktualisieren (`PUT /author/{id}`)
-     - Kann Blogs löschen (`DELETE /blog/{id}`)
-     - Kann Kommentare löschen (`DELETE /comments/{id}`)
-     - Kann Tags hinzufügen (`POST /tag`)
-     - Kann Tags zu Blogs hinzufügen (`POST /blog/{blogId}/tags`)
+2. **Author**
+   - Kann Blogs hinzufügen.
+   - Kann Kommentare zu Blogs hinzufügen.
 
-2. **`Author`**
-   - **Berechtigungen**:
-     - Kann Blogs erstellen (`POST /blog`)
-     - Kann Kommentare zu Blogs hinzufügen (`POST /blog/{blogId}/comments`)
+3. **User**
+   - Kann Blogs und Kommentare lesen.
 
-## Hinweise
-- Achten Sie darauf, dass die `@Transactional`-Anmerkung verwendet wird, um sicherzustellen, dass Datenbankoperationen ordnungsgemäß ausgeführt werden.
-- Die `@Inject`-Anmerkung wird verwendet, um die Abhängigkeiten zwischen den verschiedenen Klassen zu verwalten.
+### Authentifizierungs-Setup austesten
 
-## OpenAPI Dokumentation
-Die OpenAPI-Dokumentation beschreibt die verfügbaren Endpunkte, die Operationen und die möglichen Antworten. Sie können sie verwenden, um die API zu testen und zu integrieren. Die OpenAPI-Spezifikation ist in der Datei `openapi.json` zu finden.
+Um das Authentifizierungs-Setup und die Benutzerrollen zu testen, folge diesen Schritten:
+
+1. **Keycloak-Konfiguration:**
+   - Richte Keycloak mit den notwendigen Realms, Clients und Benutzerrollen ein. Verwende die Quarkus Dev-Services, um Keycloak automatisch zu starten.
+   - Beispiel-Konfiguration:
+     - Realm: `blog`
+     - Clients: `backend-service`
+     - Benutzer: `admin` (Rolle: Admin), `author` (Rolle: Author), `user` (Rolle: User)
+   
+2. **JWT-Token abrufen:**
+   - Melde dich bei Keycloak an, um einen JWT-Token zu erhalten. Dieser Token wird benötigt, um geschützte Endpunkte aufzurufen.
+   - Beispiel:
+     ```bash
+     http -v --form --auth backend-service:secret POST http://localhost:8180/realms/blog/protocol/openid-connect/token \
+     username=alice password=alice grant_type=password client_id=backend-service
+     ```
+
+3. **Token für API-Aufrufe verwenden:**
+   - Verwende den JWT-Token in den HTTP-Headern deiner API-Aufrufe:
+     ```bash
+     http POST http://localhost:8080/blog Authorization:"Bearer <TOKEN>" \
+     Content-Type:application/json title="Neuer Blog" content="Inhalt des Blogs" category="Tech" authorId:=1
+     ```
+
+4. **Testfälle für Berechtigungen:**
+   - Teste, ob Benutzer ohne ausreichende Berechtigungen blockiert werden und ob die richtigen HTTP-Statuscodes zurückgegeben werden.
+   - Zum Beispiel, wenn ein `Author` versucht, einen Blog zu löschen, sollte dies blockiert werden.
+
+## DTOs und Validierung
+
+### AuthorDTO
+- **Felder:**
+  - `name`: Der Name des Autors. Muss ein nicht-leerer String sein.
+  - `biography`: Die Biografie des Autors. Optionaler Text.
+  
+- **Validierung:**
+  - `name` darf nicht leer sein.
+
+### BlogDTO
+- **Felder:**
+  - `title`: Der Titel des Blogs. Muss ein nicht-leerer String sein.
+  - `content`: Der Inhalt des Blogs. Muss ein nicht-leerer String sein.
+  - `category`: Die Kategorie des Blogs. Optional.
+  - `authorId`: Die ID des Autors, der den Blog erstellt hat.
+  - `tags`: Eine Liste von Tags für den Blog. Optional.
+  
+- **Validierung:**
+  - `title` und `content` dürfen nicht leer sein.
+  - `authorId` muss vorhanden und gültig sein.
+
+### CommentDTO
+- **Felder:**
+  - `content`: Der Inhalt des Kommentars. Muss ein nicht-leerer String sein.
+  - `blogId`: Die ID des Blogs, zu dem der Kommentar gehört.
+  
+- **Validierung:**
+  - `content` darf nicht leer sein.
+  - `blogId` muss vorhanden und gültig sein.
 
 ## Installation und Ausführung
 
@@ -229,3 +276,58 @@ Die OpenAPI-Dokumentation beschreibt die verfügbaren Endpunkte, die Operationen
     ```
 
 Die API ist nun unter [http://localhost:8080](http://localhost:8080) verfügbar.
+
+## Beispielanfragen (Sample Requests)
+
+Hier sind einige Beispielanfragen, die mit `httpie` durchgeführt werden können, um die API zu testen:
+
+```bash
+# Beispiel für das Abrufen aller Blogs
+http GET http://localhost:8080/blog Authorization:"Bearer <TOKEN>"
+
+# Beispiel für das Hinzufügen eines neuen Blogs
+http POST http://localhost:8080/blog Authorization:"Bearer <TOKEN>" \
+Content-Type:application/json title="Neuer Blog" content="Inhalt des Blogs" category="Tech" authorId:=1
+
+# Beispiel für das Abrufen aller Autoren
+http GET http://localhost:8080/author Authorization:"Bearer <TOKEN>"
+
+# Beispiel für das Hinzufügen eines neuen Autors
+http POST http://localhost:8080/author Authorization:"Bearer <TOKEN>" \
+Content-Type:application/json name="John Doe" biography="Softwareentwickler aus Zürich."
+
+# Beispiel für das Löschen eines Blogs
+http DELETE http://localhost:8080/blog/1 Authorization:"Bearer <TOKEN>"
+
+# Beispiel für das Hinzufügen eines Kommentars zu einem Blog
+http POST http://localhost:8080/blog/1/comments Authorization:"Bearer <TOKEN>" \
+Content-Type:application/json content="Sehr hilfreicher Artikel!" blogId:=1
+
+# Fehlerbehandlung und Response Codes
+
+Die API verwendet folgende HTTP-Statuscodes, um den Status von Anfragen zurückzugeben:
+
+- **200 OK**: Die Anfrage war erfolgreich.
+- **201 Created**: Eine neue Ressource wurde erfolgreich erstellt.
+- **400 Bad Request**: Die Anfrage war fehlerhaft oder unvollständig.
+- **401 Unauthorized**: Die Anfrage erfordert eine Authentifizierung.
+- **403 Forbidden**: Der Benutzer hat nicht die erforderlichen Berechtigungen.
+- **404 Not Found**: Die angeforderte Ressource wurde nicht gefunden.
+- **500 Internal Server Error**: Ein Serverfehler ist aufgetreten.
+
+# Architekturüberblick
+
+Die Blog-API ist in mehrere Schichten unterteilt:
+
+- **Controller-Schicht (Resource-Klassen)**: Diese Schicht kümmert sich um die Verarbeitung der HTTP-Anfragen und die Rückgabe der entsprechenden Antworten. Die Controller rufen die Services auf, um die Geschäftslogik auszuführen.
+- **Service-Schicht**: Die Geschäftslogik der Anwendung wird in den Service-Klassen implementiert. Diese Schicht ist für die Verarbeitung der Daten und die Anwendung der Geschäftsregeln verantwortlich.
+- **Repository-Schicht**: Diese Schicht stellt den Zugriff auf die Datenbank sicher und führt CRUD-Operationen (Erstellen, Lesen, Aktualisieren, Löschen) auf den Entitäten durch.
+
+Die Anwendung verwendet Dependency Injection (DI) für die Verwaltung der Abhängigkeiten zwischen den verschiedenen Schichten, was die Testbarkeit und Wartbarkeit des Codes verbessert.
+
+# Swagger/OpenAPI Integration
+
+Die API-Dokumentation ist interaktiv über die Swagger-UI verfügbar. Diese ermöglicht es, die Endpunkte der API direkt im Browser zu testen und die Struktur der API im Detail zu erkunden. Die Swagger-UI ist unter folgender URL erreichbar:
+
+[http://localhost:8080/q/swagger-ui](http://localhost:8080/q/swagger-ui)
+

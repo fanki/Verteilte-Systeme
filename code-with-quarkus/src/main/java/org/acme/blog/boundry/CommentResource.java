@@ -9,6 +9,8 @@ import org.acme.blog.entity.Blog;
 import org.acme.blog.entity.Comment;
 import org.acme.blog.repository.CommentRepository;
 
+import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.DELETE;
@@ -31,12 +33,14 @@ public class CommentResource {
     CommentRepository commentRepository;
 
     @GET
+    @PermitAll
     public List<Comment> getAllComments() {
         return commentRepository.listAll();
     }
 
     @POST
-    @Path("/{blogId}")
+    @Path("/blogs/{blogId}/comments")
+    @RolesAllowed({"Admin", "Author"})
     public Response addComment(@PathParam("blogId") Long blogId, @Valid CommentDTO commentDTO) {
         Blog blog = blogService.findById(blogId);
         if (blog == null) {
@@ -47,9 +51,21 @@ public class CommentResource {
         return Response.status(Response.Status.CREATED).entity(comment).build();
     }
 
+    @GET
+    @Path("/blogs/{blogId}/comments")
+    @PermitAll
+    public Response getComments(@PathParam("blogId") Long blogId) {
+        List<Comment> comments = commentService.getCommentsByBlog(blogId);
+        if (comments.isEmpty()) {
+            return Response.status(Response.Status.NOT_FOUND).entity("No comments found").build();
+        }
+        return Response.ok(comments).build();
+    }
+
     @DELETE
     @Path("/{id}")
-    public Response deleteComment(@PathParam("id") long id) {
+    @RolesAllowed("Admin")
+    public Response deleteCommentById(@PathParam("id") long id) {
         boolean deleted = commentService.deleteComment(id);
         if (!deleted) {
             return Response.status(Response.Status.NOT_FOUND).entity("Comment not found").build();

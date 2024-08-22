@@ -4,6 +4,8 @@ import org.acme.blog.entity.Tag;
 import org.acme.blog.control.TagService;
 import org.acme.blog.dto.TagDTO;
 
+import jakarta.annotation.security.PermitAll;
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
@@ -18,6 +20,7 @@ public class TagResource {
     TagService tagService;
 
     @GET
+    @PermitAll
     public List<TagDTO> getTags() {
         return tagService.getAllTags().stream()
             .map(tag -> new TagDTO(tag.getName()))
@@ -25,6 +28,7 @@ public class TagResource {
     }
 
     @POST
+    @RolesAllowed({"Admin", "Author"})
     public Response addTag(@Valid TagDTO tagDTO) {
         Tag tag = new Tag(tagDTO.name());
         tagService.addTag(tag);
@@ -33,6 +37,7 @@ public class TagResource {
 
     @GET
     @Path("/{id}")
+    @PermitAll
     public Response getTagById(@PathParam("id") Long id) {
         Tag tag = tagService.getTagById(id);
         if (tag == null) {
@@ -43,6 +48,7 @@ public class TagResource {
 
     @PUT
     @Path("/{id}")
+    @RolesAllowed("Admin")
     public Response updateTag(@PathParam("id") Long id, @Valid TagDTO tagDTO) {
         Tag tag = new Tag(tagDTO.name());
         Tag updatedTag = tagService.updateTag(id, tag);
@@ -54,6 +60,7 @@ public class TagResource {
 
     @DELETE
     @Path("/{id}")
+    @RolesAllowed("Admin")
     public Response deleteTag(@PathParam("id") Long id) {
         boolean deleted = tagService.deleteTag(id);
         if (!deleted) {

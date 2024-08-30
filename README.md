@@ -215,7 +215,7 @@ Um das Authentifizierungs-Setup und die Benutzerrollen zu testen, folge diesen S
    - Beispiel:
      ```bash
      http -v --form --auth backend-service:secret POST http://localhost:8180/realms/blog/protocol/openid-connect/token \
-     username=alice password=alice grant_type=password client_id=backend-service
+     username=simon password=simon grant_type=password client_id=backend-service
      ```
 
 3. **Token für API-Aufrufe verwenden:**

@@ -2,15 +2,11 @@ package org.acme.blog.control;
 
 import org.acme.blog.entity.Author;
 import org.acme.blog.repository.AuthorRepository;
-import org.acme.blog.control.AuthorService;
 
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-import jakarta.ws.rs.DELETE;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
-import jakarta.ws.rs.core.Response;
+import java.util.Optional;
 
 @Dependent
 public class AuthorService {
@@ -20,29 +16,44 @@ public class AuthorService {
 
     @Transactional
     public void addAuthor(Author author) {
+        if (author.getName() == null || author.getName().isEmpty()) {
+            throw new IllegalArgumentException("Author name cannot be null or empty");
+        }
         authorRepository.persist(author);
     }
 
     @Transactional
-    public Author updateAuthor(Long id, Author author) {
+    public Optional<Author> updateAuthor(Long id, Author updatedAuthor) {
         Author existingAuthor = authorRepository.findById(id);
         if (existingAuthor != null) {
-            existingAuthor.setName(author.getName());
-            authorRepository.persist(existingAuthor);
+            boolean updated = false;
+
+            // Nur bei wirklicher Änderung speichern
+            if (!existingAuthor.getName().equals(updatedAuthor.getName())) {
+                existingAuthor.setName(updatedAuthor.getName());
+                updated = true;
+            }
+
+            if (updated) {
+                authorRepository.persist(existingAuthor);
+            }
+            return Optional.of(existingAuthor);
         }
-        return existingAuthor;
+        return Optional.empty();
     }
 
     @Transactional
-    public void deleteAuthor(long id) {
+    public boolean deleteAuthor(long id) {
         Author author = authorRepository.findById(id);
         if (author != null) {
             authorRepository.delete(author);
+            return true;
         }
+        return false;
     }
 
     @Transactional
-    public Author findById(Long id) {
-        return authorRepository.findById(id);
+    public Optional<Author> findById(Long id) {
+        return Optional.ofNullable(authorRepository.findById(id));
     }
 }

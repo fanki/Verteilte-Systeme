@@ -35,59 +35,92 @@ public class DataInitialization {
 
     @Transactional
     public void init(@Observes StartupEvent event) {
-        // Initial Authors
-        Author author1 = new Author("John Doe", "A seasoned blogger and tech enthusiast.");
-        Author author2 = new Author("Jane Smith", "An experienced writer with a passion for travel.");
+        try {
+            initAuthors();
+            initTags();
+            initBlogsAndComments();
+            LOG.info("Dateninitialisierung abgeschlossen.");
+        } catch (Exception e) {
+            LOG.error("Fehler bei der Dateninitialisierung: " + e.getMessage(), e);
+            throw e; // Optional: Die Ausnahme erneut werfen, um sicherzustellen, dass die
+                     // Transaktion zurückgerollt wird
+        }
+    }
 
-        authorRepository.persist(author1);
-        authorRepository.persist(author2);
+    private void initAuthors() {
+        if (authorRepository.findAll().list().isEmpty()) {
+            Author author1 = new Author("John Doe", "A seasoned blogger and tech enthusiast.");
+            Author author2 = new Author("Jane Smith", "An experienced writer with a passion for travel.");
 
-        LOG.info("Authors initialized.");
+            authorRepository.persist(author1);
+            authorRepository.persist(author2);
 
-        // Initial Tags
-        Tag tagTech = new Tag("Tech");
-        Tag tagTravel = new Tag("Travel");
+            LOG.info("Authors initialized.");
+        } else {
+            LOG.info("Authors already initialized.");
+        }
+    }
 
-        tagService.addTag(tagTech);
-        tagService.addTag(tagTravel);
+    private void initTags() {
+        if (tagService.getAllTags().isEmpty()) {
+            Tag tagTech = new Tag("Tech");
+            Tag tagTravel = new Tag("Travel");
 
-        LOG.info("Tags initialized.");
+            tagService.addTag(tagTech);
+            tagService.addTag(tagTravel);
 
-        // Initial Blogs
-        Blog[] initialBlogs = {
-            new Blog("Blog Nummer 1", "Blog let's go!", "Tech", author1, List.of(tagTech)),
-            new Blog("Blog Nummer 2", "Hurra!", "Travel", author2, List.of(tagTravel)),
-            new Blog("Blog Nummer 3", "A new blog about Quarkus.", "Tech", author1, List.of(tagTech)),
-            new Blog("Blog Nummer 4", "Exploring new places.", "Travel", author2, List.of(tagTravel))
-        };
+            LOG.info("Tags initialized.");
+        } else {
+            LOG.info("Tags already initialized.");
+        }
+    }
 
-        for (Blog blog : initialBlogs) {
-            try {
+    private void initBlogsAndComments() {
+        if (blogService.getBlogs().isEmpty()) {
+            // Initial Blogs
+            Blog[] initialBlogs = {
+                    new Blog("Blog Nummer 1", "Blog let's go!", "Tech", findAuthorByName("John Doe"),
+                            List.of(findTagByName("Tech"))),
+                    new Blog("Blog Nummer 2", "Hurra!", "Travel", findAuthorByName("Jane Smith"),
+                            List.of(findTagByName("Travel"))),
+                    new Blog("Blog Nummer 3", "A new blog about Quarkus.", "Tech", findAuthorByName("John Doe"),
+                            List.of(findTagByName("Tech"))),
+                    new Blog("Blog Nummer 4", "Exploring new places.", "Travel", findAuthorByName("Jane Smith"),
+                            List.of(findTagByName("Travel")))
+            };
+
+            for (Blog blog : initialBlogs) {
                 blogService.addBlog(blog);
                 LOG.infof("Blog '%s' erfolgreich erstellt.", blog.getTitle());
-            } catch (Exception e) {
-                LOG.errorf("Fehler beim Erstellen des Blogs '%s': %s", blog.getTitle(), e.getMessage());
             }
-        }
+            // Initial Comments
+            Comment[] initialComments = {
+                    new Comment("Great blog on tech!", initialBlogs[0], findAuthorByName("John Doe")),
+                    new Comment("Very informative.", initialBlogs[2], findAuthorByName("John Doe")),
+                    new Comment("I loved the travel tips.", initialBlogs[1], findAuthorByName("Jane Smith")),
+                    new Comment("Looking forward to more posts!", initialBlogs[3], findAuthorByName("Jane Smith"))
+            };
 
-        // Initial Comments
-        Comment[] initialComments = {
-            new Comment("Great blog on tech!", initialBlogs[0]),
-            new Comment("Very informative.", initialBlogs[2]),
-            new Comment("I loved the travel tips.", initialBlogs[1]),
-            new Comment("Looking forward to more posts!", initialBlogs[3])
-        };
-
-        for (Comment comment : initialComments) {
-            try {
+            for (Comment comment : initialComments) {
                 commentService.addComment(comment.getBlog(), comment);
                 LOG.infof("Kommentar '%s' erfolgreich hinzugefügt.", comment.getContent());
-            } catch (Exception e) {
-                LOG.errorf("Fehler beim Hinzufügen des Kommentars '%s': %s", comment.getContent(), e.getMessage());
             }
-        }
 
-        LOG.info("Kommentare initialisiert.");
-        LOG.info("Dateninitialisierung abgeschlossen.");
+            LOG.info("Blogs und Kommentare initialisiert.");
+        } else {
+            LOG.info("Blogs and Comments already initialized.");
+        }
+    }
+
+    private Author findAuthorByName(String name) {
+        return authorRepository.find("name", name).firstResultOptional()
+                .orElseThrow(() -> new IllegalStateException("Autor " + name + " nicht gefunden"));
+    }
+
+    private Tag findTagByName(String name) {
+        return tagService.getAllTags().stream()
+                .filter(tag -> tag.getName().equals(name))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Tag " + name + " nicht gefunden"));
     }
 }

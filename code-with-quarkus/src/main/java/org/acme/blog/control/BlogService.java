@@ -1,6 +1,7 @@
 package org.acme.blog.control;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.acme.blog.entity.Author;
 import org.acme.blog.entity.Blog;
@@ -8,13 +9,13 @@ import org.acme.blog.repository.AuthorRepository;
 import org.acme.blog.repository.BlogRepository;
 
 import io.quarkus.logging.Log;
-
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 @Dependent
 public class BlogService {
+
     @Inject
     BlogRepository blogRepository;
 
@@ -42,12 +43,14 @@ public class BlogService {
     }
 
     @Transactional
-    public void deleteBlog(long id) {
+    public boolean deleteBlog(long id) {
         Blog blog = blogRepository.findById(id);
         if (blog != null) {
             blogRepository.delete(blog);
+            return true; // Rückgabe des Erfolgs
         } else {
             Log.info("Blog with ID " + id + " not found");
+            return false; // Rückgabe bei Nichterfolg
         }
     }
 
@@ -67,9 +70,8 @@ public class BlogService {
         return blogRepository.findById(id);
     }
 
-      @Transactional
+    @Transactional
     public Author findAuthorById(Long id) {
         return authorRepository.findById(id);
     }
-
 }

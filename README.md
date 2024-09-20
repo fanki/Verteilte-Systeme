@@ -277,6 +277,34 @@ Um das Authentifizierungs-Setup und die Benutzerrollen zu testen, folge diesen S
 
 Die API ist nun unter [http://localhost:8080](http://localhost:8080) verfügbar.
 
+## Packaging
+Mit folgendem befehl wird ein Package erstellt.
+./mvn package
+ 
+Es wird die quarkus-run.jar Datei erstellt welche im Ordner `target/quarkus-app/`
+Die Dependencies werden dabei in den Ordner `target/quarkus-app/lib/`kopiert.
+ 
+Es wird auch ein Docker image bei dabei erstellt. `fanki/blog-backend:0.1`
+ 
+## running the application
+mit `java -jar target/quarkus-app/quarkus-run.jar`
+
+## Start als Container
+ 
+docker network create blog-nw
+
+# Keycloak starten
+docker run --name keycloak --network blog-nw -v ${PWD}/src/main/resources/blog-realm.json:/opt/keycloak/data/import/realm.json -e KEYCLOAK_ADMIN=admin -e KEYCLOAK_ADMIN_PASSWORD=admin -e KC_HTTP_PORT=8180 -e KC_HOSTNAME_URL=http://keycloak:8180 -p 8180:8180 -d quay.io/keycloak/keycloak:22.0.1 start-dev --import-realm
+
+# Datenbank starten
+docker run --name blog-mysql -p 3306:3306 --network blog-nw -e MYSQL_ROOT_PASSWORD=vs4tw -e MYSQL_USER=dbuser -e MYSQL_PASSWORD=dbuser -e MYSQL_DATABASE=blogdb -d mysql:8.0
+
+# App starten
+docker run --name blog-backend --network blog-nw -e QUARKUS_DATASOURCE_JDBC_URL=jdbc:mysql://blog-mysql:3306/blogdb -e QUARKUS_DATASOURCE_USERNAME=dbuser -e QUARKUS_DATASOURCE_PASSWORD=dbuser -e QUARKUS_OIDC_AUTH_SERVER_URL=http://keycloak:8180/realms/blog -e QUARKUS_OIDC_CLIENT_ID=backend-service -e QUARKUS_OIDC_CREDENTIALS_SECRET=secret! -p 8080:8080 -d fanki/blog-backend:0.1
+
+## Bearer Token holen
+http -v --form --auth backend-service:secret! POST http://keycloak:8180/realms/blog/protocol/openid-connect/token username=alice password=alice grant_type=password
+
 ## Beispielanfragen (Sample Requests)
 
 Hier sind einige Beispielanfragen, die mit `httpie` durchgeführt werden können, um die API zu testen:

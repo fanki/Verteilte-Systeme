@@ -9,11 +9,14 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriInfo;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Path("/tag")
+@Path("/tags")
 public class TagResource {
 
     @Inject
@@ -29,10 +32,17 @@ public class TagResource {
 
     @POST
     @RolesAllowed({"Admin", "Author"})
-    public Response addTag(@Valid TagDTO tagDTO) {
+    public Response addTag(@Valid TagDTO tagDTO, @Context UriInfo uriInfo) {
+        if (tagDTO.name() == null || tagDTO.name().isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Tag name cannot be empty").build();
+        }
+
         Tag tag = new Tag(tagDTO.name());
         tagService.addTag(tag);
-        return Response.status(Response.Status.CREATED).entity(tag).build();
+
+        return Response.created(uriInfo.getAbsolutePathBuilder().path(String.valueOf(tag.getId())).build())
+                       .entity(new TagDTO(tag.getName()))
+                       .build();
     }
 
     @GET
@@ -43,19 +53,25 @@ public class TagResource {
         if (tag == null) {
             return Response.status(Response.Status.NOT_FOUND).entity("Tag not found").build();
         }
-        return Response.ok(tag).build();
+        return Response.ok(new TagDTO(tag.getName())).build();
     }
 
     @PUT
     @Path("/{id}")
     @RolesAllowed("Admin")
     public Response updateTag(@PathParam("id") Long id, @Valid TagDTO tagDTO) {
-        Tag tag = new Tag(tagDTO.name());
-        Tag updatedTag = tagService.updateTag(id, tag);
-        if (updatedTag == null) {
+        if (tagDTO.name() == null || tagDTO.name().isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).entity("Tag name cannot be empty").build();
+        }
+
+        Tag existingTag = tagService.getTagById(id);
+        if (existingTag == null) {
             return Response.status(Response.Status.NOT_FOUND).entity("Tag not found").build();
         }
-        return Response.ok(updatedTag).build();
+
+        existingTag.setName(tagDTO.name());
+        Tag updatedTag = tagService.updateTag(id, existingTag);
+        return Response.ok(new TagDTO(updatedTag.getName())).build();
     }
 
     @DELETE

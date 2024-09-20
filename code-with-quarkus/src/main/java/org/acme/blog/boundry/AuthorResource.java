@@ -6,7 +6,6 @@ import org.acme.blog.entity.Author;
 import org.acme.blog.repository.AuthorRepository;
 
 import io.quarkus.security.Authenticated;
-import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
@@ -20,6 +19,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 
 import java.util.List;
+import java.util.Optional;
 
 @Path("/author")
 public class AuthorResource {
@@ -32,8 +32,10 @@ public class AuthorResource {
 
     @GET
     @Authenticated
-    public List<Author> getAllAuthors() {
-        return authorRepository.listAll();
+    public Response getAllAuthors() {
+        List<Author> authors = authorRepository.listAll();
+        // Leere Liste ist keine Ausnahme, deshalb 200 OK mit leerer Liste
+        return Response.ok(authors).build();
     }
 
     @POST
@@ -41,29 +43,19 @@ public class AuthorResource {
     public Response addAuthor(@Valid AuthorDTO authorDTO, @Context UriInfo uriInfo) {
         Author author = new Author(authorDTO.name(), authorDTO.biography());
         authorService.addAuthor(author);
-        return Response.status(Response.Status.CREATED).entity(author).build();
+        return Response.created(uriInfo.getAbsolutePathBuilder().path(String.valueOf(author.getId())).build())
+                       .entity(author)
+                       .build();
     }
 
     @PUT
     @Path("/{id}")
     @RolesAllowed("Admin")
     public Response editAuthor(@PathParam("id") long id, @Valid AuthorDTO authorDTO) {
-        Author author = new Author(authorDTO.name(), authorDTO.biography());
-        Author updatedAuthor = authorService.updateAuthor(id, author);
-        if (updatedAuthor == null) {
+        Optional<Author> updatedAuthor = authorService.updateAuthor(id, new Author(authorDTO.name(), authorDTO.biography()));
+        if (updatedAuthor.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND).entity("Author not found").build();
         }
-        return Response.ok(updatedAuthor).build();
-    }
-
-    @RolesAllowed("Admin")
-    public Author updateAuthor(Long id, Author author) {
-        Author existingAuthor = authorRepository.findById(id);
-        if (existingAuthor != null) {
-            existingAuthor.setName(author.getName());
-            existingAuthor.setBiography(author.getBiography()); // Update Biografie
-            authorRepository.persist(existingAuthor);
-        }
-        return existingAuthor;
+        return Response.ok(updatedAuthor.get()).build();
     }
 }

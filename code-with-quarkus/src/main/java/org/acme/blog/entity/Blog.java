@@ -27,12 +27,13 @@ public class Blog {
     private Long id;
 
     @NotNull(message = "Titel darf nicht null sein.")
-    @Size(min = 5, message = "Titel braucht mindestens 5 Zeichen.")
+    @Size(min = 5, message = "Titel muss mindestens 5 Zeichen lang sein.")
     private String title;
 
     @NotBlank(message = "Inhalt darf nicht leer sein.")
     private String content;
 
+    @Size(max = 100, message = "Kategorie darf nicht länger als 100 Zeichen sein.")
     private String category;
 
     @ManyToOne
@@ -41,44 +42,27 @@ public class Blog {
 
     @ManyToMany
     @JoinTable(
-      name = "blog_tag",
+      name = "Blog_Tags",
       joinColumns = @JoinColumn(name = "blog_id"),
       inverseJoinColumns = @JoinColumn(name = "tag_id"))
-    private Set<Tag> tags;
+    private Set<Tag> tags = new HashSet<>();
+
+    public Blog(String title, String content, String category, Author author, List<Tag> tags) {
+        this.title = title;
+        this.content = content;
+        this.category = category;
+        this.author = author;
+        if (tags != null) {
+            this.tags.addAll(tags);
+        }
+    }
+
+    public Blog(String title, String content, String category, Author author) {
+        this(title, content, category, author, null);
+    }
 
     public Blog(String title, String content) {
         this.title = title;
         this.content = content;
     }
-
-    public Blog(String title, String content, Author author) {
-        this.title = title;
-        this.content = content;
-        this.author = author;
-    }
-
-    public Blog(String title, String content, String category) {
-        this.title = title;
-        this.content = content;
-        this.category = category;
-    }
-
-    public Blog(String title, String content, String category, Author author) {
-        this.title = title;
-        this.content = content;
-        this.category = category;
-        this.author = author;
-    }
-
-    public Blog(String title, String content, String category, Author author, List<Tag> tags) {
-    this.title = title;
-    this.content = content;
-    this.category = category;
-    this.author = author;
-    this.tags = new HashSet<>(); 
-    if (tags != null) {
-        this.tags.addAll(tags);
-    }
-}
-
 }

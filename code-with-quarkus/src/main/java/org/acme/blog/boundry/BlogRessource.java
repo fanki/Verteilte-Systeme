@@ -31,7 +31,7 @@ public class BlogRessource {
     @PermitAll
     public Response getBlogs(@QueryParam("authorId") Long authorId, @QueryParam("title") String title) {
         List<Blog> blogs = blogService.getBlogsFiltered(authorId, title);
-        if (blogs.isEmpty()) {
+        if (blogs == null || blogs.isEmpty()) {
             return Response.status(Response.Status.NOT_FOUND).entity("No blogs found").build();
         }
         return Response.ok(blogs).build();
@@ -46,13 +46,21 @@ public class BlogRessource {
         }
         Blog blog = new Blog(blogDTO.title(), blogDTO.content(), blogDTO.category(), author, null); 
         blogService.addBlog(blog);
-        return Response.status(Response.Status.CREATED).entity(blog).build();
+        
+        // Neue Location zur Antwort hinzufügen
+        return Response.created(uriInfo.getAbsolutePathBuilder().path(String.valueOf(blog.getId())).build())
+                      .entity(blog)
+                      .build();
     }
 
     @DELETE
     @Path("/{id}")
     @RolesAllowed("Admin")
     public Response deleteBlog(@PathParam("id") long id) {
+        Blog blog = blogService.findById(id);
+        if (blog == null) {
+            return Response.status(Response.Status.NOT_FOUND).entity("Blog not found").build();
+        }
         blogService.deleteBlog(id);
         return Response.status(Response.Status.NO_CONTENT).build();
     }

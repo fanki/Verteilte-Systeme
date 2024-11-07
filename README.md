@@ -359,3 +359,128 @@ Die API-Dokumentation ist interaktiv über die Swagger-UI verfügbar. Diese erm�
 
 [http://localhost:8080/q/swagger-ui](http://localhost:8080/q/swagger-ui)
 
+
+### MySQL Flexible Server als unsere Datenbank aufsetzen
+# Umgebungsvariablen setzen
+$env:RESOURCE_GROUP = "rg-blog-db"
+$env:MYSQL_SERVER_NAME = "mysql-flex-blog"
+$env:REGION = "westeurope"
+
+# Anmelden und Ressourcengruppe erstellen
+az login
+az account set --subscription "DeineSubscriptionIDoderName"
+az group create --name $env:RESOURCE_GROUP --location $env:REGION
+
+# MySQL Flexible Server erstellen
+az mysql flexible-server create --resource-group $env:RESOURCE_GROUP --name $env:MYSQL_SERVER_NAME --location $env:REGION --admin-user myadmin --admin-password MySecurePassword123! --sku-name Standard_B1ms --tier Burstable --storage-size 32 --public-access 0.0.0.0
+
+# Firewall-Regel hinzufügen (optional)
+az mysql flexible-server firewall-rule create --resource-group $env:RESOURCE_GROUP --name $env:MYSQL_SERVER_NAME --rule-name allowip --start-ip-address <gewünschte-IP> --end-ip-address <gewünschte-IP>
+
+# MySQL-Einstellung für Keycloak-Kompatibilität setzen
+az mysql flexible-server parameter set --resource-group $env:RESOURCE_GROUP --server-name $env:MYSQL_SERVER_NAME --name sql_generate_invisible_primary_key --value OFF
+
+# Ressourcengruppe und alle zugehörigen Ressourcen löschen
+az group delete --name $env:RESOURCE_GROUP --no-wait --yes
+
+
+# Beispielhafte Lösung im Windows CMD für MySQL Flexible Server Setup
+
+## a) Setup Vorbereiten
+Führe die folgenden Befehle aus, um die Umgebung vorzubereiten:
+
+```cmd
+az login
+
+az account set --subscription "Azure für Bildungseinrichtungen"
+
+set RESOURCE_GROUP="d-rg-blog-example"
+set MYSQL_SERVER_NAME="d-mysql-blog-example"
+set LOCATION="germanywestcentral"
+```
+
+## b) Ressourcengruppe
+Erstelle die Ressourcengruppe:
+
+```cmd
+az group create --name %RESOURCE_GROUP% --location %LOCATION%
+```
+
+## c) MySQL Flexible Server
+Erstelle den MySQL Flexible Server und konfiguriere die Firewall:
+
+```cmd
+az mysql flexible-server create ^
+    --name %MYSQL_SERVER_NAME% ^
+    --resource-group %RESOURCE_GROUP%  ^
+    --location %LOCATION%  ^
+    --public-access None  ^
+    --database-name test ^
+    --admin-user db_adm ^
+    --admin-password my$avePass9 ^
+    --sku-name Standard_B1s ^
+    --storage-size 32 ^
+    --tier Burstable ^
+    --version 8.0.21 
+
+az mysql flexible-server firewall-rule create ^
+    --resource-group %RESOURCE_GROUP% ^
+    --name %MYSQL_SERVER_NAME% ^
+    --rule-name allowip ^
+    --start-ip-address 0.0.0.0
+```
+
+### MySQL Parameter für Keycloak Kompatibilität
+Falls nötig, setze das Parameter für Keycloak:
+
+```cmd
+az mysql flexible-server parameter set --name sql_generate_invisible_primary_key --resource-group %RESOURCE_GROUP% --server-name %MYSQL_SERVER_NAME% --value OFF
+```
+
+## Optional: Zugriff von deinem System auf die DB
+Falls du von deinem System aus auf die Datenbank zugreifen möchtest:
+
+```cmd
+For /f %i in ('http https://ipecho.net/plain -b') do set "MY_IP=%i"
+echo %MY_IP%
+
+az mysql flexible-server firewall-rule create ^
+    --resource-group %RESOURCE_GROUP% ^
+    --name %MYSQL_SERVER_NAME% ^
+    --rule-name allowip ^
+    --start-ip-address %MY_IP%
+```
+
+## d) Ressourcengruppe aufräumen
+Um die Ressourcengruppe und alle zugehörigen Ressourcen zu löschen:
+
+```cmd
+az group delete --name %RESOURCE_GROUP%
+```
+### Datenbank einrichten
+# Verbindung zum MySQL-Server
+mysql -u simon -p -h mysql-flex-blog-new.mysql.database.azure.com --ssl
+
+# In der MySQL-Shell:
+CREATE DATABASE keycloak_db;
+CREATE DATABASE blog_db;
+
+CREATE USER 'keycloak_user'@'%' IDENTIFIED BY 'simon';
+GRANT ALL PRIVILEGES ON keycloak_db.* TO 'keycloak_user'@'%';
+
+CREATE USER 'blog_user'@'%' IDENTIFIED BY 'simon';
+GRANT ALL PRIVILEGES ON blog_db.* TO 'blog_user'@'%';
+
+USE keycloak_db;
+CREATE TABLE test_table_keycloak (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(50)
+);
+INSERT INTO test_table_keycloak (name) VALUES ('Beispielname1'), ('Beispielname2');
+
+USE blog_db;
+CREATE TABLE test_table_blog (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(100)
+);
+INSERT INTO test_table_blog (title) VALUES ('Blogtitel1'), ('Blogtitel2');

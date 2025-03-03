@@ -11,12 +11,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import io.quarkus.hibernate.orm.panache.PanacheEntity;
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+
 
 @Entity
 @Data
 @NoArgsConstructor
-public class Blog extends PanacheEntity {
+public class Blog extends PanacheEntityBase {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -42,7 +43,7 @@ public class Blog extends PanacheEntity {
       inverseJoinColumns = @JoinColumn(name = "tag_id"))
     private Set<Tag> tags = new HashSet<>();
 
-    // ✅ NEU: Status der Validierung
+    @Column(nullable = false)
     private boolean approved = false;
 
     public Blog(String title, String content, String category, Author author, List<Tag> tags, boolean approved) {

@@ -6,7 +6,9 @@ import java.util.Optional;
 import org.acme.blog.control.BlogService;
 import org.acme.blog.dto.BlogDTO;
 import org.acme.blog.entity.Blog;
+import org.acme.blog.messaging.ValidationRequest;
 import org.acme.blog.messaging.ValidationResponse;
+import org.acme.blog.repository.BlogRepository;
 import org.acme.blog.entity.Author;
 
 import jakarta.annotation.security.PermitAll;
@@ -37,8 +39,11 @@ public class BlogRessource {
     BlogService blogService;
 
     @Inject
+    BlogRepository blogRepository;
+
+    @Inject
     @Channel("validation-request")
-    Emitter<Blog> validationRequestEmitter;
+    Emitter<ValidationRequest> validationRequestEmitter;
 
     @GET
     @PermitAll
@@ -104,7 +109,7 @@ public class BlogRessource {
     @Transactional
     public void processValidationResponse(ValidationResponse validationResponse) {
         Log.debug("Validation Response: " + validationResponse);
-        Optional<Blog> blogOptional = Blog.findByIdOptional(validationResponse.id());
+        Optional<Blog> blogOptional = blogRepository.findByIdOptional(validationResponse.id());
 
         if (blogOptional.isEmpty()) {
             Log.warn("Blog post not found for validation response.");

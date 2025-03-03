@@ -8,7 +8,9 @@ import org.jboss.logging.Logger;
 
 import messaging.ValidationRequest;
 import messaging.ValidationResponse;
+import jakarta.enterprise.context.ApplicationScoped;
 
+@ApplicationScoped
 public class ValidationService {
 
     private static final Logger Log = Logger.getLogger(ValidationService.class);

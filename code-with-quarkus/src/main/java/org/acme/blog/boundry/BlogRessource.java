@@ -105,7 +105,7 @@ public class BlogRessource {
         }
     }
 
-    @Incoming("validation-response")
+   /*  @Incoming("validation-response")
     @Transactional
     public void processValidationResponse(ValidationResponse validationResponse) {
         Log.debug("Validation Response: " + validationResponse);
@@ -119,6 +119,6 @@ public class BlogRessource {
         Blog blog = blogOptional.get();
         blog.setApproved(validationResponse.valid());
         blog.persist();
-    }
+    } */
 
 }

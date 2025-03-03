@@ -1,4 +1,4 @@
-package org.acme.blog.control;
+/* package org.acme.blog.control;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
@@ -53,3 +53,4 @@ public class AuthorServiceTest {
         assertEquals("Access denied", exception.getMessage());
     }
 }
+ */

@@ -1,7 +1,6 @@
 package org.acme.blog.boundry;
 
 import java.util.List;
-
 import org.acme.blog.control.BlogService;
 import org.acme.blog.dto.BlogDTO;
 import org.acme.blog.entity.Blog;
@@ -10,6 +9,7 @@ import org.acme.blog.entity.Author;
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -21,12 +21,20 @@ import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 
+import org.eclipse.microprofile.reactive.messaging.Channel;
+import org.eclipse.microprofile.reactive.messaging.Emitter;
+import org.eclipse.microprofile.reactive.messaging.Incoming;
+
 @Path("/blog")
 public class BlogRessource {
 
     @Inject
     BlogService blogService;
-    
+
+    @Inject
+    @Channel("validation-request")
+    Emitter<Blog> validationRequestEmitter;
+
     @GET
     @PermitAll
     public Response getBlogs(@QueryParam("authorId") Long authorId, @QueryParam("title") String title) {
@@ -44,10 +52,14 @@ public class BlogRessource {
         if (author == null) {
             return Response.status(Response.Status.NOT_FOUND).entity("Author not found").build();
         }
-        Blog blog = new Blog(blogDTO.title(), blogDTO.content(), blogDTO.category(), author, null); 
+
+        // ✅ Blog-Entity überprüfen
+        Blog blog = new Blog(blogDTO.title(), blogDTO.content(), blogDTO.category(), author, false);
         blogService.addBlog(blog);
-        
-        // Neue Location zur Antwort hinzufügen
+
+        // ✅ Blog zur Validierung an Kafka senden
+        validationRequestEmitter.send(blog);
+
         return Response.created(uriInfo.getAbsolutePathBuilder().path(String.valueOf(blog.getId())).build())
                       .entity(blog)
                       .build();
@@ -74,5 +86,15 @@ public class BlogRessource {
             return Response.status(Response.Status.NOT_FOUND).entity("No blogs found for the given category").build();
         }
         return Response.ok(blogs).build();
+    }
+
+    // ✅ Kafka-Consumer: Erhält Validierungsergebnisse und aktualisiert den Blog-Status
+    @Incoming("validation-response")
+    @Transactional
+    public void updateBlogStatus(Blog blog) {
+        Blog existingBlog = blogService.findById(blog.getId());
+        if (existingBlog != null) {
+            existingBlog.setApproved(blog.isApproved());
+        }
     }
 }

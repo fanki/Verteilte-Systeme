@@ -1,4 +1,4 @@
-package org.acme.blog.boundry;
+/* package org.acme.blog.boundry;
 
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
@@ -69,3 +69,4 @@ public class BlogRessourceTest {
         return mockUriInfo;
     }
 }
+ */

@@ -1,13 +1,6 @@
 package org.acme.blog.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.JoinColumn;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -47,22 +40,40 @@ public class Blog {
       inverseJoinColumns = @JoinColumn(name = "tag_id"))
     private Set<Tag> tags = new HashSet<>();
 
-    public Blog(String title, String content, String category, Author author, List<Tag> tags) {
+    // ✅ NEU: Status der Validierung
+    private boolean approved = false;
+
+    public Blog(String title, String content, String category, Author author, List<Tag> tags, boolean approved) {
         this.title = title;
         this.content = content;
         this.category = category;
         this.author = author;
+        this.approved = approved;
         if (tags != null) {
             this.tags.addAll(tags);
         }
     }
 
-    public Blog(String title, String content, String category, Author author) {
-        this(title, content, category, author, null);
+    public Blog(String title, String content, String category, Author author, boolean approved) {
+        this(title, content, category, author, null, approved);
     }
 
     public Blog(String title, String content) {
         this.title = title;
         this.content = content;
     }
+
+    // ✅ Getter und Setter für den neuen `approved`-Status
+    public boolean isApproved() {
+        return approved;
+    }
+
+    public void setApproved(boolean approved) {
+        this.approved = approved;
+    }
+
+    public Long getId() {
+        return id;
+    }
+    
 }

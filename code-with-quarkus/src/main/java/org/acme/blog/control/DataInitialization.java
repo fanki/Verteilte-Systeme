@@ -77,40 +77,44 @@ public class DataInitialization {
 
     private void initBlogsAndComments() {
         if (blogService.getBlogs().isEmpty()) {
-            // Initial Blogs
+            LOG.info("Initialisiere Blogs und Kommentare...");
+    
+            // ✅ Initial Blogs mit `approved = false` (muss validiert werden)
             Blog[] initialBlogs = {
                     new Blog("Blog Nummer 1", "Blog let's go!", "Tech", findAuthorByName("John Doe"),
-                            List.of(findTagByName("Tech"))),
+                            List.of(findTagByName("Tech")), false),
                     new Blog("Blog Nummer 2", "Hurra!", "Travel", findAuthorByName("Jane Smith"),
-                            List.of(findTagByName("Travel"))),
+                            List.of(findTagByName("Travel")), false),
                     new Blog("Blog Nummer 3", "A new blog about Quarkus.", "Tech", findAuthorByName("John Doe"),
-                            List.of(findTagByName("Tech"))),
+                            List.of(findTagByName("Tech")), false),
                     new Blog("Blog Nummer 4", "Exploring new places.", "Travel", findAuthorByName("Jane Smith"),
-                            List.of(findTagByName("Travel")))
+                            List.of(findTagByName("Travel")), false)
             };
-
+    
             for (Blog blog : initialBlogs) {
                 blogService.addBlog(blog);
                 LOG.infof("Blog '%s' erfolgreich erstellt.", blog.getTitle());
             }
-            // Initial Comments
+    
+            // ✅ Initial Comments erstellen
             Comment[] initialComments = {
                     new Comment("Great blog on tech!", initialBlogs[0], findAuthorByName("John Doe")),
                     new Comment("Very informative.", initialBlogs[2], findAuthorByName("John Doe")),
                     new Comment("I loved the travel tips.", initialBlogs[1], findAuthorByName("Jane Smith")),
                     new Comment("Looking forward to more posts!", initialBlogs[3], findAuthorByName("Jane Smith"))
             };
-
+    
             for (Comment comment : initialComments) {
                 commentService.addComment(comment.getBlog(), comment);
                 LOG.infof("Kommentar '%s' erfolgreich hinzugefügt.", comment.getContent());
             }
-
-            LOG.info("Blogs und Kommentare initialisiert.");
+    
+            LOG.info("✅ Blogs und Kommentare erfolgreich initialisiert.");
         } else {
-            LOG.info("Blogs and Comments already initialized.");
+            LOG.info("✅ Blogs und Kommentare sind bereits initialisiert.");
         }
     }
+    
 
     private Author findAuthorByName(String name) {
         return authorRepository.find("name", name).firstResultOptional()

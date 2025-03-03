@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.acme.blog.entity.Author;
 import org.acme.blog.entity.Blog;
+import org.acme.blog.messaging.ValidationRequest;
 import org.acme.blog.repository.AuthorRepository;
 import org.acme.blog.repository.BlogRepository;
 
@@ -12,6 +13,9 @@ import io.quarkus.logging.Log;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+
+import org.eclipse.microprofile.reactive.messaging.Channel;
+import org.eclipse.microprofile.reactive.messaging.Emitter;
 
 @Dependent
 public class BlogService {
@@ -21,6 +25,10 @@ public class BlogService {
 
     @Inject
     AuthorRepository authorRepository;
+
+    @Inject
+    @Channel("validation-request")
+    Emitter<ValidationRequest> validationRequestEmitter;
 
     public List<Blog> getBlogs() {
         var blogs = blogRepository.listAll();
@@ -74,4 +82,11 @@ public class BlogService {
     public Author findAuthorById(Long id) {
         return authorRepository.findById(id);
     }
+
+    @Transactional
+    public void addBlogEntry(Blog blog) {
+        blog.persist();
+        validationRequestEmitter.send(new ValidationRequest(blog.getId(), blog.getTitle() + " " + blog.getContent()));
+    }
+
 }

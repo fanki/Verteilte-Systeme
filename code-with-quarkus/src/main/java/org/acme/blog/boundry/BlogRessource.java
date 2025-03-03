@@ -1,9 +1,12 @@
 package org.acme.blog.boundry;
 
 import java.util.List;
+import java.util.Optional;
+
 import org.acme.blog.control.BlogService;
 import org.acme.blog.dto.BlogDTO;
 import org.acme.blog.entity.Blog;
+import org.acme.blog.messaging.ValidationResponse;
 import org.acme.blog.entity.Author;
 
 import jakarta.annotation.security.PermitAll;
@@ -24,6 +27,8 @@ import jakarta.ws.rs.core.UriInfo;
 import org.eclipse.microprofile.reactive.messaging.Channel;
 import org.eclipse.microprofile.reactive.messaging.Emitter;
 import org.eclipse.microprofile.reactive.messaging.Incoming;
+
+import io.quarkus.logging.Log;
 
 @Path("/blog")
 public class BlogRessource {
@@ -46,23 +51,19 @@ public class BlogRessource {
     }
 
     @POST
-    @RolesAllowed({"Author", "Admin"})
+    @RolesAllowed({ "Author", "Admin" })
     public Response addBlog(@Valid BlogDTO blogDTO, @Context UriInfo uriInfo) {
-        Author author = blogService.findAuthorById(blogDTO.authorId()); 
+        Author author = blogService.findAuthorById(blogDTO.authorId());
         if (author == null) {
             return Response.status(Response.Status.NOT_FOUND).entity("Author not found").build();
         }
 
-        // ✅ Blog-Entity überprüfen
         Blog blog = new Blog(blogDTO.title(), blogDTO.content(), blogDTO.category(), author, false);
-        blogService.addBlog(blog);
-
-        // ✅ Blog zur Validierung an Kafka senden
-        validationRequestEmitter.send(blog);
+        blogService.addBlogEntry(blog);
 
         return Response.created(uriInfo.getAbsolutePathBuilder().path(String.valueOf(blog.getId())).build())
-                      .entity(blog)
-                      .build();
+                .entity(blog)
+                .build();
     }
 
     @DELETE
@@ -88,7 +89,8 @@ public class BlogRessource {
         return Response.ok(blogs).build();
     }
 
-    // ✅ Kafka-Consumer: Erhält Validierungsergebnisse und aktualisiert den Blog-Status
+    // ✅ Kafka-Consumer: Erhält Validierungsergebnisse und aktualisiert den
+    // Blog-Status
     @Incoming("validation-response")
     @Transactional
     public void updateBlogStatus(Blog blog) {
@@ -97,4 +99,21 @@ public class BlogRessource {
             existingBlog.setApproved(blog.isApproved());
         }
     }
+
+    @Incoming("validation-response")
+    @Transactional
+    public void processValidationResponse(ValidationResponse validationResponse) {
+        Log.debug("Validation Response: " + validationResponse);
+        Optional<Blog> blogOptional = Blog.findByIdOptional(validationResponse.id());
+
+        if (blogOptional.isEmpty()) {
+            Log.warn("Blog post not found for validation response.");
+            return;
+        }
+
+        Blog blog = blogOptional.get();
+        blog.setApproved(validationResponse.valid());
+        blog.persist();
+    }
+
 }

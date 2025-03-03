@@ -11,10 +11,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import io.quarkus.hibernate.orm.panache.PanacheEntity;
+
 @Entity
 @Data
 @NoArgsConstructor
-public class Blog {
+public class Blog extends PanacheEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

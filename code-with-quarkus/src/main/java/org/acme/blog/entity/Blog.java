@@ -13,7 +13,6 @@ import java.util.Set;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 
-
 @Entity
 @Data
 @NoArgsConstructor
@@ -33,14 +32,11 @@ public class Blog extends PanacheEntityBase {
     private String category;
 
     @ManyToOne
-    @NotNull(message = "Autor darf nicht null sein.")
+    @JoinColumn(name = "author_id", nullable = false)
     private Author author;
 
     @ManyToMany
-    @JoinTable(
-      name = "Blog_Tags",
-      joinColumns = @JoinColumn(name = "blog_id"),
-      inverseJoinColumns = @JoinColumn(name = "tag_id"))
+    @JoinTable(name = "Blog_Tags", joinColumns = @JoinColumn(name = "blog_id"), inverseJoinColumns = @JoinColumn(name = "tag_id"))
     private Set<Tag> tags = new HashSet<>();
 
     @Column(nullable = false)
@@ -78,5 +74,5 @@ public class Blog extends PanacheEntityBase {
     public Long getId() {
         return id;
     }
-    
+
 }

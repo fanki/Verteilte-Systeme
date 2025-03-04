@@ -58,11 +58,22 @@ public class BlogRessource {
     @POST
     @RolesAllowed({ "Author", "Admin" })
     public Response addBlog(@Valid BlogDTO blogDTO, @Context UriInfo uriInfo) {
-        Author author = blogService.findAuthorById(blogDTO.authorId());
-        if (author == null) {
-            return Response.status(Response.Status.NOT_FOUND).entity("Author not found").build();
+        if (blogDTO.authorName() == null || blogDTO.authorName().trim().isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("Author name must not be blank")
+                    .build();
         }
 
+        // 🔍 Suche den Autor anhand des Namens
+        Author author = blogService.findAuthorByName(blogDTO.authorName());
+
+        if (author == null) {
+            return Response.status(Response.Status.NOT_FOUND)
+                    .entity("Author not found: " + blogDTO.authorName())
+                    .build();
+        }
+
+        // 📌 Erstelle einen neuen Blog-Eintrag
         Blog blog = new Blog(blogDTO.title(), blogDTO.content(), blogDTO.category(), author, false);
         blogService.addBlogEntry(blog);
 
@@ -105,20 +116,25 @@ public class BlogRessource {
         }
     }
 
-   /*  @Incoming("validation-response")
-    @Transactional
-    public void processValidationResponse(ValidationResponse validationResponse) {
-        Log.debug("Validation Response: " + validationResponse);
-        Optional<Blog> blogOptional = blogRepository.findByIdOptional(validationResponse.id());
-
-        if (blogOptional.isEmpty()) {
-            Log.warn("Blog post not found for validation response.");
-            return;
-        }
-
-        Blog blog = blogOptional.get();
-        blog.setApproved(validationResponse.valid());
-        blog.persist();
-    } */
+    /*
+     * @Incoming("validation-response")
+     * 
+     * @Transactional
+     * public void processValidationResponse(ValidationResponse validationResponse)
+     * {
+     * Log.debug("Validation Response: " + validationResponse);
+     * Optional<Blog> blogOptional =
+     * blogRepository.findByIdOptional(validationResponse.id());
+     * 
+     * if (blogOptional.isEmpty()) {
+     * Log.warn("Blog post not found for validation response.");
+     * return;
+     * }
+     * 
+     * Blog blog = blogOptional.get();
+     * blog.setApproved(validationResponse.valid());
+     * blog.persist();
+     * }
+     */
 
 }

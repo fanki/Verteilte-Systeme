@@ -89,4 +89,9 @@ public class BlogService {
         validationRequestEmitter.send(new ValidationRequest(blog.getId(), blog.getTitle() + " " + blog.getContent()));
     }
 
+    @Transactional
+    public Author findAuthorByName(String name) {
+        return authorRepository.find("name", name).firstResult();
+    }
+
 }

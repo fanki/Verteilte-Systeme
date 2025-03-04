@@ -18,6 +18,6 @@ public class BlogConsumer {
         
         // Persist Blog nach Empfang
         blogRepository.persist(blog);
-        System.out.println("Blog saved to DB: " + blog.title);
+        System.out.println("Blog saved to DB: " + blog.getTitle());
     }
 }

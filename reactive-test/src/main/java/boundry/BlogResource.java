@@ -67,10 +67,9 @@ public class BlogResource {
             return Response.status(Status.NOT_FOUND).entity("Blog not found with ID: " + id).build();
         }
 
-        existingBlog.title = updatedBlog.title;
-        existingBlog.content = updatedBlog.content;
-        existingBlog.author = updatedBlog.author;
-        existingBlog.publishedDate = updatedBlog.publishedDate;
+        existingBlog.setTitle(updatedBlog.getTitle());
+        existingBlog.setContent(updatedBlog.getContent()); 
+        existingBlog.setAuthor(updatedBlog.getAuthor()); 
 
         return Response.ok(existingBlog).build();
     }
